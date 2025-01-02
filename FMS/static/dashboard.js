@@ -95,6 +95,9 @@ function generateTeamElement(team, id) {
         Y <span id="team-${team.number}-y">${team.position.y.toFixed(2)}</span><br/>
         Last Update: <span id="team-${team.number}-postime">${team.lastPosUpdate}</span>
     </div>
+    <div style="grid-area: buttons;">
+        <button onclick="removeTeam(${team.number})">Remove Team</button>
+    </div>
     `
 
     teamsDiv.appendChild(element);
@@ -133,6 +136,14 @@ async function updateTeams(){
         else
             posttime.style.color = "unset";
     }
+}
+
+function addTeam(){
+    let input = document.getElementById("add-team-number");
+    fetch(`/Lab/AddTeam/${input.value}`);
+}
+function removeTeam(team){
+    fetch(`/Lab/RemoveTeam/${team}`);
 }
 
 window.onload = () => {
