@@ -102,3 +102,36 @@ To simulate a full fare, you just have to move your vehicle twice.
 5. You should see the fare status show `In Positoin` again. Wait for completion
 6. When the fare has completed, it will move down and should show the `Completed` and `Paid` badges
 7. You should see your team's balance and reputation have been updated
+
+# MatchLib
+Included in this repository is a small single-file python library teams can use to help with match status. This provides a few simple functions to get information about the match, or just wait until it starts.
+
+It also provides the periodic updating functionality that allows us to help diagnose issues on competition day.
+
+To use MatchLib, simply copy the file next to your code, and refer to the example below.
+
+```python
+from MatchLib import *
+
+# Initialize matchlib
+init_matchlib("[Server Info]", [Team Number], auth="[Auth Key]")
+
+# Wait for VPFS to connect
+# Will get stuck if testing without VPFS
+wait_for_connection()
+
+# Do some setup
+
+# Wait for your match to start
+# This will also get stuck without VPFS
+wait_for_match()
+print("Match started")
+
+# Loop until the match is finished
+# This will return false without VPFS
+while not is_match_finished():
+    # Do stuff
+    pass
+
+print("Match Finished")
+```
