@@ -84,7 +84,7 @@ class Fare:
         team.currentFare = idx
         return None
 
-    def pay_fare(self, teams : list[Team]):
+    def pay_fare(self, teams : dict[int, Team]):
         """
         Pay the team their fare
         Will ensure that fare is completed and fare is not already paid
@@ -124,7 +124,7 @@ class Fare:
             data["paid"] = self.paid
         return data
 
-    def periodic(self, number: int, teams: list[Team]):
+    def periodic(self, number: int, teams: dict[int, Team]):
         """
         Update phases of the fare
         Checks team position to determine if they are at start/destination, and if dropoff/pickup should occur

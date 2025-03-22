@@ -34,7 +34,7 @@ def serve_status():
         return jsonify({
             "mode": operatingMode,
             "match": FMS.matchNum,
-            "matchStart": FMS.matchRunning,
+            "matchStart": FMS.matchStarted,
             "timeRemain": FMS.matchEndTime - time.time(),
             "inMatch": team in FMS.teams,
             "team": team,

@@ -8,6 +8,7 @@ from threading import Lock
 
 from Fare import FareType
 
+matchStarted = False
 matchRunning = False
 matchNum = 0
 matchDuration = 0
@@ -84,18 +85,19 @@ def periodic():
         time.sleep(0.02)
 
 def config_match(num: int, duration: int):
-    global matchNum, matchDuration, matchRunning, matchEndTime, fares
+    global matchNum, matchDuration, matchRunning, matchEndTime, fares, matchStarted
     with mutex:
         # Only apply when match is finished
         if matchEndTime < time.time():
             matchNum = num
             matchDuration = duration
             matchEndTime = 0
+            matchStarted = False
             matchRunning = False
             fares.clear()
 
 def start_match():
-    global matchEndTime, matchRunning, fares
+    global matchEndTime, matchRunning, fares, matchStarted
     with mutex:
         if not matchRunning:
             fares.clear()
@@ -107,6 +109,7 @@ def start_match():
                     print("Seeded fare")
 
             matchEndTime = time.time() + matchDuration
+            matchStarted = True
             matchRunning = True
 
 def cancel_match():
