@@ -12,14 +12,15 @@ import utils
 
 # Camera settings for Desktop mode
 camera_id = 0
-camera_width = 4096
+camera_width = 3840
 camera_height = 2160
 # Intrinsics used in detection
 # Tuned for Logitech Brio 4k
-cam_fx = 978.56
-cam_fy = 973.73
-cam_cx = 825.30
-cam_cy = 467.65
+cam_fx =  2287.142539416255
+cam_fy = 2280.7409018486487
+cam_cx =  1974.3341419854764
+cam_cy = 1114.1584980995751
+
 camera_intrinsics = (cam_fx, cam_fy, cam_cx, cam_cy)
 # Using 8cm tags
 tag_size = 8 / 100
