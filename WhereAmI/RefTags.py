@@ -28,4 +28,12 @@ def _addTag(tag: ReferenceTag):
 
 # Tags for lab setup
 # _addTag(ReferenceTag(584, 0.53, 0.715))
-_addTag(ReferenceTag(0, 0, 0))
+_addTag(ReferenceTag(585, 0.29, 1.35))
+
+# Tag 1:  1.29, 1.35
+# Tag 2: 4.52, 1.35
+# Tag 3: 2.13	1.35
+# Tag 4: 3.05	0.29
+# Tag 583: 1.81	4.59
+# Tag 584: 5.85	2.33
+# Tag 585: 4.52 2.93

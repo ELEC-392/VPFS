@@ -12,8 +12,6 @@ import os
 from pupil_apriltags import Detector
 
 import utils
-from scipy.interpolate import griddata
-from scipy import ndimage
 
 # Camera settings for Desktop mode
 camera_id = 0
@@ -48,74 +46,106 @@ pipeline = ' ! '.join([
 
 # Run with jetson CLI opt for jetson use, otherwise runs desktop mode
 jetson = "jetson" in sys.argv
-
-if jetson:
-    # Configure camera for best results
-    os.system("v4l2-ctl -d /dev/video0 -c focus_auto=0")
-    os.system("v4l2-ctl -d /dev/video0 -c focus_absolute=0")
-    # Readback current settings
-    os.system("v4l2-ctl -d /dev/video0 -C focus_auto")
-    os.system("v4l2-ctl -d /dev/video0 -C focus_absolute")
-    cam = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
-else:
-    cam = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
-    cam.open(camera_id + cv2.CAP_MSMF)
-    cam.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
-    cam.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
-    cam.set(cv2.CAP_PROP_AUTOFOCUS, 0) # Don't want autofocus to cause issues
-
-frameWidth = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
-frameHeight = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
-max_fps = int(cam.get(cv2.CAP_PROP_FRAME_RATE))
-print(frameWidth, 'x', frameHeight, '@', max_fps)
-print(int(cam.get(cv2.CAP_PROP_FOURCC)).to_bytes(4, byteorder=sys.byteorder).decode())
-
+#
+# if jetson:
+#     # Configure camera for best results
+#     os.system("v4l2-ctl -d /dev/video0 -c focus_auto=0")
+#     os.system("v4l2-ctl -d /dev/video0 -c focus_absolute=0")
+#     # Readback current settings
+#     os.system("v4l2-ctl -d /dev/video0 -C focus_auto")
+#     os.system("v4l2-ctl -d /dev/video0 -C focus_absolute")
+#     cam = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
+# else:
+#     cam = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
+#     cam.open(camera_id + cv2.CAP_MSMF)
+#     cam.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
+#     cam.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
+#     cam.set(cv2.CAP_PROP_AUTOFOCUS, 0) # Don't want autofocus to cause issues
+#
+# frameWidth = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
+# frameHeight = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
+# max_fps = int(cam.get(cv2.CAP_PROP_FRAME_RATE))
+# print(frameWidth, 'x', frameHeight, '@', max_fps)
+# print(int(cam.get(cv2.CAP_PROP_FOURCC)).to_bytes(4, byteorder=sys.byteorder).decode())
+#
 font = cv2.FONT_HERSHEY_PLAIN
 def show_tags(img, detections):
     for tag in detections:
         img = cv2.putText(img, str(tag.tag_id), (int(tag.center[0]), int(tag.center[1])), font, 3, (0, 0, 255), 2, cv2.LINE_AA)
         img = cv2.rectangle(img, (int(tag.corners[0][0]), int(tag.corners[0][1])), (int(tag.corners[2][0]), int(tag.corners[2][1])), (0, 0, 255), 2)
     return img
-
-if not cam.isOpened():
-    print("Cannot open camera")
-    exit()
+#
+# if not cam.isOpened():
+#     print("Cannot open camera")
+#     exit()
 
 lastTime = time.time()
 while True:
     # Capture the frame
-    ret, frame = cam.read()
-    mtx = numpy.mat([[2.28714254e+03, 0.00000000e+00, 1.97433414e+03],
-                     [0.00000000e+00, 2.28074090e+03, 1.11415850e+03],
-                     [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]]
-                    )
-    dist = numpy.mat([[ 0.22220229, -0.54687349, -0.00134406, 0.00215362, 0.35906696]])
+    # ret, frame = cam.read()
+    # ret = True
+    # frame = cv2.imread("image.jpg")
+    # mtx = numpy.asmatrix([[2.28714254e+03, 0.00000000e+00, 1.97433414e+03],
+    #                  [0.00000000e+00, 2.28074090e+03, 1.11415850e+03],
+    #                  [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]]
+    #                 )
+    # dist = numpy.asmatrix([[ 0.22220229, -0.54687349, -0.00134406, 0.00215362, 0.35906696]])
+    #
+    # w, h = frame.shape[:2]
+    # newCamMtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
+    #
+    # frame = cv2.undistort(frame, mtx, dist, None, newCamMtx)
 
-    w, h = frame.shape[:2]
-    newCamMtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
-
-    frame = cv2.undistort(frame, mtx, dist, None, newCamMtx)
-    # Rotate image to square it up
-    frame = ndimage.rotate(frame, 4)
+    frame = cv2.imread("warped_image.jpg")
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     detections = detector.detect(gray)
     frame = show_tags(frame, detections)
 
-    # Define the mesh of known points
-    meshWorld = []
-    meshMap = []
-    worldPoses = []
-    for det in detections:
-        # print(det)
-        if det.tag_id in refTags:
-            tag = refTags[det.tag_id]
-            # Add real-world and map positions to the mesh
-            meshWorld.append(det.center)
-            meshMap.append((tag.x, tag.y))
-            print(f"Ref: {det.tag_id} @ {det.center} -> {(tag.x, tag.y)}")
-        worldPoses.append(det.center)
+    cv2.imshow('frame', cv2.resize(frame, (1080, 720)))
+    cv2.waitKey()
 
+    # srcPts = []
+    # destPts = []
+    # for det in detections:
+    #     if det.tag_id in refTags:
+    #         tag = refTags[det.tag_id]
+    #         srcPts.append(det.center)
+    #         destPts.append((tag.x * 100, tag.y * 100))
+    #
+    # m = cv2.getPerspectiveTransform(np.float32(intersect_pts), np.float32(dstPts))
+    # out = cv2.warpPerspective(color, m, (int(width), int(height)))
+    # cv2.imshow(out)
+    # cv2.waitKey()
+    # break
+
+    # Pixel- and map-space references
+    # w, h = frame.shape[:2]
+
+    # Pixel X, Y then Map X, Y
+    # Tag 585
+    c1 = (96.12823632, 1585.88893689, 0.29, 1.35)
+    # Tag 586
+    c2 = (2882.88720807, 816.83914472, 4.52, 2.93)
+
+    dx_pixel = c2[0] - c1[0]
+    dy_pixel = c2[1] - c1[1]
+
+    dx_map = c2[2] - c1[2]
+    dy_map = c2[3] - c1[3]
+
+    tags = {}
+
+    for det in detections:
+        # Very basic interpolation, just assume a nice square grid until we need more
+        dx = det.center[0] - c1[0]
+        dy = det.center[1] - c1[1]
+        x = c1[2] + (dx / dx_pixel) * dx_map
+        y = c1[3] + (dy / dy_pixel) * dy_map
+        print(f"DET: {det.tag_id} @ {det.center} -> {(x,y)}")
+        tags[det.tag_id] = (x, y)
+
+    break
 
     if not ret:
         print("Failed to receive frame, exiting")
