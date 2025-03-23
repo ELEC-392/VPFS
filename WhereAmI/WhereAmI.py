@@ -3,7 +3,7 @@ import sys
 import numpy
 
 from RefTags import refTags
-from Warp import flattenImage
+from Warp import flattenImage, debugImage
 import VPFS
 
 import cv2
@@ -47,28 +47,28 @@ pipeline = ' ! '.join([
 
 # Run with jetson CLI opt for jetson use, otherwise runs desktop mode
 jetson = "jetson" in sys.argv
-#
-# if jetson:
-#     # Configure camera for best results
-#     os.system("v4l2-ctl -d /dev/video0 -c focus_auto=0")
-#     os.system("v4l2-ctl -d /dev/video0 -c focus_absolute=0")
-#     # Readback current settings
-#     os.system("v4l2-ctl -d /dev/video0 -C focus_auto")
-#     os.system("v4l2-ctl -d /dev/video0 -C focus_absolute")
-#     cam = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
-# else:
-#     cam = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
-#     cam.open(camera_id + cv2.CAP_MSMF)
-#     cam.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
-#     cam.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
-#     cam.set(cv2.CAP_PROP_AUTOFOCUS, 0) # Don't want autofocus to cause issues
-#
-# frameWidth = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
-# frameHeight = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
-# max_fps = int(cam.get(cv2.CAP_PROP_FRAME_RATE))
-# print(frameWidth, 'x', frameHeight, '@', max_fps)
-# print(int(cam.get(cv2.CAP_PROP_FOURCC)).to_bytes(4, byteorder=sys.byteorder).decode())
-#
+
+if jetson:
+#   Configure camera for best results
+    os.system("v4l2-ctl -d /dev/video0 -c focus_auto=0")
+    os.system("v4l2-ctl -d /dev/video0 -c focus_absolute=0")
+#   Readback current settings
+    os.system("v4l2-ctl -d /dev/video0 -C focus_auto")
+    os.system("v4l2-ctl -d /dev/video0 -C focus_absolute")
+    cam = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
+else:
+    cam = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
+    cam.open(camera_id + cv2.CAP_MSMF)
+    cam.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
+    cam.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
+    cam.set(cv2.CAP_PROP_AUTOFOCUS, 0) # Don't want autofocus to cause issues
+
+frameWidth = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
+frameHeight = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
+max_fps = 5 #int(cam.get(cv2.CAP_PROP_FRAME_RATE))
+print(frameWidth, 'x', frameHeight, '@', max_fps)
+print(int(cam.get(cv2.CAP_PROP_FOURCC)).to_bytes(4, byteorder=sys.byteorder).decode())
+
 font = cv2.FONT_HERSHEY_PLAIN
 def show_tags(img, detections):
     for tag in detections:
@@ -82,10 +82,6 @@ def show_tags(img, detections):
 
 lastTime = time.time()
 while True:
-    # Capture the frame
-    # ret, frame = cam.read()
-    # ret = True
-    # frame = cv2.imread("image.jpg")
     # Full camera intrinsics
     mtx = numpy.asmatrix([[2.28714254e+03, 0.00000000e+00, 1.97433414e+03],
                      [0.00000000e+00, 2.28074090e+03, 1.11415850e+03],
@@ -93,9 +89,11 @@ while True:
                     )
     dist = numpy.asmatrix([[ 0.22220229, -0.54687349, -0.00134406, 0.00215362, 0.35906696]])
 
-    frame = cv2.imread("image.jpg")
-
-    ret = True
+    # Capture the frame
+    ret, frame = cam.read()
+    # frame = cv2.imread("image.jpg")
+    # frame = cv2.imread("frame.jpg")
+    # ret = True
 
     if not ret:
         print("Failed to receive frame, exiting")
@@ -104,12 +102,15 @@ while True:
     # Compensate for camera distortion with intrinsics
     w, h = frame.shape[:2]
     newCamMtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
-    frame = cv2.undistort(frame, mtx, dist, None, newCamMtx)
+    # frame = cv2.undistort(frame, mtx, dist, None, newCamMtx)
 
+    # cv2.imwrite('frame.jpg', frame)
+    # frame = debugImage(frame)
     frame = flattenImage(frame)
 
-    cv2.imshow('frame', cv2.resize(frame, (1080, 720)))
-    # cv2.waitKey()
+    # cv2.imshow('frame', cv2.resize(frame, (1080, 720)))
+    # cv2.waitKey(1)
+    # continue
     # break
 
     frameHeight, frameWidth = frame.shape[:2]
@@ -123,10 +124,10 @@ while True:
 
     # Reference points for interpolation, based on unwarped test image
     # Pixel X, Y then Map X, Y
-    # Tag 585
-    c1 = (199.46288575, 1752.02702346, 0.29, 1.35)
     # Tag 586
-    c2 = (2857.05712323,  956.62713016, 4.52, 2.93)
+    c1 = (528.50126516, 409.35826428, 0.885, 4.175)
+    # Tag 584
+    c2 = (3232.68137057, 1682.59394541, 5.12, 0.975)
 
     dx_pixel = c2[0] - c1[0]
     dy_pixel = c2[1] - c1[1]
@@ -142,7 +143,7 @@ while True:
         dy = det.center[1] - c1[1]
         x = c1[2] + (dx / dx_pixel) * dx_map
         y = c1[3] + (dy / dy_pixel) * dy_map
-        print(f"DET: {det.tag_id} @ {det.center} -> {(x,y)}")
+        # print(f"DET: {det.tag_id} @ {det.center} -> {(x,y)}")
         # Just set all Z values to 0
         tagPoses[det.tag_id] = (x, y, 0)
 
@@ -157,7 +158,12 @@ while True:
     # Add info block
     cv2.putText(frame, f"{frameWidth}x{frameHeight} @ {fps:.2f} fps", (0,50), font, 3, (255, 255, 255), 2, cv2.LINE_AA)
     #cv2.putText(frame, f"X{cameraPos[0]:.2f} Y{cameraPos[1]:.2f} Z{cameraPos[2]:.2f}", (0, frameHeight-200), font, 3, (255, 0, 255), 2, cv2.LINE_AA)
-    
+
+    # Draw points on ref tags
+    r = 10
+    cv2.circle(frame, (int(c1[0] - r), int(c1[1] - r)), 2 * r, (0, 0, 255), -1)
+    cv2.circle(frame, (int(c2[0] - r), int(c2[1] - r)), 2 * r, (0, 0, 255), -1)
+
     i = -100
     for tag in tagPoses:
         cv2.putText(frame, f"{tag}: X{tagPoses[tag][0]:.2f} Y{tagPoses[tag][1]:.2f} Z{tagPoses[tag][2]:.2f}", (0, frameHeight + i), font, 3, (255, 0, 255), 2, cv2.LINE_AA)
