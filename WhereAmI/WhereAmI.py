@@ -3,6 +3,7 @@ import sys
 import numpy
 
 from RefTags import refTags
+from Warp import flattenImage
 import VPFS
 
 import cv2
@@ -85,24 +86,33 @@ while True:
     # ret, frame = cam.read()
     # ret = True
     # frame = cv2.imread("image.jpg")
-    # mtx = numpy.asmatrix([[2.28714254e+03, 0.00000000e+00, 1.97433414e+03],
-    #                  [0.00000000e+00, 2.28074090e+03, 1.11415850e+03],
-    #                  [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]]
-    #                 )
-    # dist = numpy.asmatrix([[ 0.22220229, -0.54687349, -0.00134406, 0.00215362, 0.35906696]])
-    #
-    # w, h = frame.shape[:2]
-    # newCamMtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
-    #
-    # frame = cv2.undistort(frame, mtx, dist, None, newCamMtx)
+    # Full camera intrinsics
+    mtx = numpy.asmatrix([[2.28714254e+03, 0.00000000e+00, 1.97433414e+03],
+                     [0.00000000e+00, 2.28074090e+03, 1.11415850e+03],
+                     [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]]
+                    )
+    dist = numpy.asmatrix([[ 0.22220229, -0.54687349, -0.00134406, 0.00215362, 0.35906696]])
 
-    frame = cv2.imread("warped_image.jpg")
-    frameHeight, frameWidth = frame.shape[:2]
+    frame = cv2.imread("image.jpg")
+
     ret = True
 
     if not ret:
         print("Failed to receive frame, exiting")
         break
+
+    # Compensate for camera distortion with intrinsics
+    w, h = frame.shape[:2]
+    newCamMtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
+    frame = cv2.undistort(frame, mtx, dist, None, newCamMtx)
+
+    frame = flattenImage(frame)
+
+    cv2.imshow('frame', cv2.resize(frame, (1080, 720)))
+    # cv2.waitKey()
+    # break
+
+    frameHeight, frameWidth = frame.shape[:2]
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     detections = detector.detect(gray)
@@ -114,9 +124,9 @@ while True:
     # Reference points for interpolation, based on unwarped test image
     # Pixel X, Y then Map X, Y
     # Tag 585
-    c1 = (96.12823632, 1585.88893689, 0.29, 1.35)
+    c1 = (199.46288575, 1752.02702346, 0.29, 1.35)
     # Tag 586
-    c2 = (2882.88720807, 816.83914472, 4.52, 2.93)
+    c2 = (2857.05712323,  956.62713016, 4.52, 2.93)
 
     dx_pixel = c2[0] - c1[0]
     dy_pixel = c2[1] - c1[1]
