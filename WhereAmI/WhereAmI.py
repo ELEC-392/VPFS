@@ -97,31 +97,21 @@ while True:
     # frame = cv2.undistort(frame, mtx, dist, None, newCamMtx)
 
     frame = cv2.imread("warped_image.jpg")
+    frameHeight, frameWidth = frame.shape[:2]
+    ret = True
+
+    if not ret:
+        print("Failed to receive frame, exiting")
+        break
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     detections = detector.detect(gray)
     frame = show_tags(frame, detections)
 
-    cv2.imshow('frame', cv2.resize(frame, (1080, 720)))
-    cv2.waitKey()
-
-    # srcPts = []
-    # destPts = []
-    # for det in detections:
-    #     if det.tag_id in refTags:
-    #         tag = refTags[det.tag_id]
-    #         srcPts.append(det.center)
-    #         destPts.append((tag.x * 100, tag.y * 100))
-    #
-    # m = cv2.getPerspectiveTransform(np.float32(intersect_pts), np.float32(dstPts))
-    # out = cv2.warpPerspective(color, m, (int(width), int(height)))
-    # cv2.imshow(out)
+    # cv2.imshow('frame', cv2.resize(frame, (1080, 720)))
     # cv2.waitKey()
-    # break
 
-    # Pixel- and map-space references
-    # w, h = frame.shape[:2]
-
+    # Reference points for interpolation, based on unwarped test image
     # Pixel X, Y then Map X, Y
     # Tag 585
     c1 = (96.12823632, 1585.88893689, 0.29, 1.35)
@@ -134,7 +124,7 @@ while True:
     dx_map = c2[2] - c1[2]
     dy_map = c2[3] - c1[3]
 
-    tags = {}
+    tagPoses = {}
 
     for det in detections:
         # Very basic interpolation, just assume a nice square grid until we need more
@@ -143,52 +133,11 @@ while True:
         x = c1[2] + (dx / dx_pixel) * dx_map
         y = c1[3] + (dy / dy_pixel) * dy_map
         print(f"DET: {det.tag_id} @ {det.center} -> {(x,y)}")
-        tags[det.tag_id] = (x, y)
+        # Just set all Z values to 0
+        tagPoses[det.tag_id] = (x, y, 0)
 
-    break
-
-    if not ret:
-        print("Failed to receive frame, exiting")
-        break
-    # Use SciPy to interpolate from world space to map space based on detected tag mesh
-    mapPoses = griddata(meshWorld, meshMap, worldPoses)
-
-    tags = {}
-    for i in range(0, len(detections)):
-        tags[detections[i].tag_id] = mapPoses[i]
-        print(f"Det: {detections[i].tag_id} @ {detections[i].center} -> {mapPoses[i]}")
-
-    # print(tags)
-
-    cv2.imshow('frame', cv2.resize(frame, (1920, 1080)))
-    cv2.waitKey()
-    continue
-
-    # Sharpen the image
-    # strength = 1.75
-    # blurred = cv2.GaussianBlur(
-
-    # fame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    # cv2.imshow('frame', cv2.resize(frame, (1080, 720)))
-    # cv2.waitKey(1)
-
-    # continue
-
-    # Process the frame
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-    # Detect tagsframe, (0, 0), 1)
-    # frame = cv2.addWeighted(frame, 1.0 + strength, blurred, -strength, 0)
-
-    detections = detector.detect(gray, True, camera_intrinsics, tag_size)
-    frame = show_tags(frame, detections)
-    cameraPos = utils.compute_camera_pos(detections)
-    # Check that there was good reference tag detection
-    tagPoses = []
-    if cameraPos is not None:
-        tagPoses = utils.compute_tag_poses(detections, cameraPos)
-        # Send updates to VPFS
-        VPFS.send_update(tagPoses)
+    # Send to VPFS
+    VPFS.send_update(tagPoses)
 
     # Compute FPS
     frameTime = time.time() - lastTime
@@ -196,7 +145,7 @@ while True:
     lastTime = time.time()
 
     # Add info block
-    cv2.putText(frame, f"{frameWidth}x{frameHeight} @ {fps:.2f} fps", (0,frameHeight - 10), font, 3, (255, 255, 255), 2, cv2.LINE_AA)
+    cv2.putText(frame, f"{frameWidth}x{frameHeight} @ {fps:.2f} fps", (0,50), font, 3, (255, 255, 255), 2, cv2.LINE_AA)
     #cv2.putText(frame, f"X{cameraPos[0]:.2f} Y{cameraPos[1]:.2f} Z{cameraPos[2]:.2f}", (0, frameHeight-200), font, 3, (255, 0, 255), 2, cv2.LINE_AA)
     
     i = -100
