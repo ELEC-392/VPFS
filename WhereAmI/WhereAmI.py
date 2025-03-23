@@ -1,4 +1,7 @@
 import sys
+
+import numpy
+
 from RefTags import refTags
 import VPFS
 
@@ -9,6 +12,8 @@ import os
 from pupil_apriltags import Detector
 
 import utils
+from scipy.interpolate import griddata
+from scipy import ndimage
 
 # Camera settings for Desktop mode
 camera_id = 0
@@ -80,10 +85,54 @@ lastTime = time.time()
 while True:
     # Capture the frame
     ret, frame = cam.read()
+    mtx = numpy.mat([[2.28714254e+03, 0.00000000e+00, 1.97433414e+03],
+                     [0.00000000e+00, 2.28074090e+03, 1.11415850e+03],
+                     [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]]
+                    )
+    dist = numpy.mat([[ 0.22220229, -0.54687349, -0.00134406, 0.00215362, 0.35906696]])
+
+    w, h = frame.shape[:2]
+    newCamMtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
+
+    frame = cv2.undistort(frame, mtx, dist, None, newCamMtx)
+    # Rotate image to square it up
+    frame = ndimage.rotate(frame, 4)
+
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    detections = detector.detect(gray)
+    frame = show_tags(frame, detections)
+
+    # Define the mesh of known points
+    meshWorld = []
+    meshMap = []
+    worldPoses = []
+    for det in detections:
+        # print(det)
+        if det.tag_id in refTags:
+            tag = refTags[det.tag_id]
+            # Add real-world and map positions to the mesh
+            meshWorld.append(det.center)
+            meshMap.append((tag.x, tag.y))
+            print(f"Ref: {det.tag_id} @ {det.center} -> {(tag.x, tag.y)}")
+        worldPoses.append(det.center)
+
 
     if not ret:
         print("Failed to receive frame, exiting")
         break
+    # Use SciPy to interpolate from world space to map space based on detected tag mesh
+    mapPoses = griddata(meshWorld, meshMap, worldPoses)
+
+    tags = {}
+    for i in range(0, len(detections)):
+        tags[detections[i].tag_id] = mapPoses[i]
+        print(f"Det: {detections[i].tag_id} @ {detections[i].center} -> {mapPoses[i]}")
+
+    # print(tags)
+
+    cv2.imshow('frame', cv2.resize(frame, (1920, 1080)))
+    cv2.waitKey()
+    continue
 
     # Sharpen the image
     # strength = 1.75
