@@ -12,27 +12,47 @@ class SpawnPoint:
     biases: FareProbability
 
 points : [SpawnPoint] = [
-    # This one always spawns seniors for reasons I guess
-    SpawnPoint(Point(0,0), FareProbability(0, 0, 1)),
-    # These two are always subsidized
-    SpawnPoint(Point(1, 1), FareProbability(0, 1, 1)),
-    SpawnPoint(Point(2, 2), FareProbability(0, 1, 1)),
-    SpawnPoint(Point(3, 3), FareProbability()),
-    SpawnPoint(Point(4, 4), FareProbability()),
-    SpawnPoint(Point(5, 5), FareProbability()),
-    SpawnPoint(Point(6, 6), FareProbability()),
-    SpawnPoint(Point(7, 7), FareProbability()),
-    SpawnPoint(Point(8, 8), FareProbability()),
-    SpawnPoint(Point(9, 9), FareProbability()),
-    SpawnPoint(Point(10, 10), FareProbability()),
-    SpawnPoint(Point(11, 11), FareProbability())
+    # Aquatic Ave
+    SpawnPoint(Point(0.42, 0.42), FareProbability()), #A
+    SpawnPoint(Point(1.77, 0.29), FareProbability()), #B
+    # SpawnPoint(Point(2.60, 0.29), FareProbability()), #C
+    SpawnPoint(Point(3.80, 0.29), FareProbability()), #D
+    SpawnPoint(Point(5.20, 0.29), FareProbability()), #E
+    # Migration Ave
+    SpawnPoint(Point(1.74, 1.35), FareProbability()), #F
+    SpawnPoint(Point(3.80, 1.35), FareProbability()), #G
+    SpawnPoint(Point(5.25, 1.35), FareProbability()), #H
+    # Pondside Ave
+    SpawnPoint(Point(1.00, 2.96), FareProbability()), #I
+    SpawnPoint(Point(5.25, 2.33), FareProbability()), #J
+    # Dabbler
+    SpawnPoint(Point(5.25, 2.93), FareProbability()), #K
+    # Breadcrumb Ave
+    SpawnPoint(Point(1.13, 4.59), FareProbability()), #L
+    SpawnPoint(Point(2.46, 4.49), FareProbability()), #M
+    # Tail Ave
+    SpawnPoint(Point(3.76, 4.34), FareProbability()), #N
+    # Duckling Drive
+    SpawnPoint(Point(5.25, 4.75), FareProbability()), #O
+
+    # Mallard
+    SpawnPoint(Point(5.85, 1.90), FareProbability()), #P
+    SpawnPoint(Point(5.93, 4.20), FareProbability()), #Q
+    # Waddle
+    SpawnPoint(Point(1.35, 2.10), FareProbability()), #R
+    # Beak
+    SpawnPoint(Point(4.52, 3.53), FareProbability()), #S
+    # Quack
+    SpawnPoint(Point(0.29, 2.00), FareProbability()), #T
+    SpawnPoint(Point(0.29, 2.80), FareProbability()), #U
+    SpawnPoint(Point(0.29, 4.10), FareProbability()), #V
 ]
 
-DIST_MIN = 0.5
+DIST_MIN = 2.5
 DIST_MAX = 999
 
 # TODO: Find a way to link this to the one in FMS.py without a circular import
-TARGET_FARES = 5
+TARGET_FARES = 8
 # Aim to have 1-2 of the special fare types at a time, Normal is the remainder
 targetProbabilities = {
     FareType.SUBSIDIZED: 1.5 / TARGET_FARES,
