@@ -1,6 +1,6 @@
 # Vehicle Positioning and Fare System (VFPS)
 
-This repository is the official Vehicle Positioning and Fare System for use in ELEC 390.
+This repository is the official Vehicle Positioning and Fare System (VPFS) for use in ELEC 392.
 
 It is for use by the competition, but also for at-home and in-lab testing of teams' vehicles.
 
