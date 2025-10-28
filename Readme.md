@@ -9,7 +9,7 @@ The core module is the main VFPS server. There will be additional modules added 
 ## At-Home Use
 
 ### Setup with PyCharm
-This project was developed in PyCharm community, so you should be able to eimply open it and run from there.
+This project was developed in PyCharm community, so you should be able to simply open it and run from there.
 
 To launch the VPFS server, simply select the VPFS configuration in the top right and run it.
 
