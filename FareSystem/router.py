@@ -18,7 +18,7 @@ import fms
 from jsonschema import validate
 from threading import Thread
 from auth import authenticate
-from params import OperatingMode, MODE
+from params import MODE, OperatingMode
 
 # Create Flask app and Socket.IO wrapper
 app = Flask(__name__)
@@ -28,8 +28,8 @@ sock = SocketIO(app)
 app.app_context().push()
 if MODE == OperatingMode.LAB:
     # Lab-only support code (import side effects, config, etc.)
-    import LabTMS
-    LabTMS.IDK = ""
+    import lab_tms
+    lab_tms.IDK = ""
 
 @app.route("/")
 def serve_root():
@@ -43,7 +43,9 @@ def serve_status():
     Query params:
       - auth: team code or team number depending on mode
     """
-    team = authenticate(request.args.get("auth", default=""), MODE)
+    auth_code = request.args.get("auth")  # None if missing
+    team = authenticate(auth_code, MODE) if auth_code else -1
+
     # Update last poll time if team exists
     if team in fms.teams:
         fms.teams[team].lastStatus = time.time()
@@ -51,7 +53,7 @@ def serve_status():
     # Return snapshot of match state (with lock)
     with fms.mutex:
         return jsonify({
-            "mode": MODE.value, # plaintext for dashboard/API
+            "mode": MODE.value,
             "match": fms.matchNum,
             "matchStart": fms.matchRunning,
             "timeRemain": fms.matchEndTime - time.time(),

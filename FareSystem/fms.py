@@ -48,12 +48,18 @@ for point in points:
     fares.append(Fare(Point(0, 0), point, FareType.NORMAL))
 
 # Registered teams participating in the match, keyed by team number.
-teams: {int: Team} = {
-    3: Team(3),
-    5: Team(5),
-    7: Team(7),
-    10: Team(10),
-}
+# teams: {int: Team} = {
+#     3: Team(3),
+#     5: Team(5),
+#     7: Team(7),
+#     10: Team(10),
+# }
+
+# Option A: start with no teams
+teams: dict[int, Team] = {}
+
+# Option B: only seed in LAB
+# teams: dict[int, Team] = {3: Team(3), 5: Team(5), 7: Team(7), 10: Team(10)} if MODE is OperatingMode.LAB else {}
 
 # Desired number of concurrently active fares displayed/managed by the system.
 TARGET_FARES = 5

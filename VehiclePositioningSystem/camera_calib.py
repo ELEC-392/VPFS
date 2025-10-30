@@ -21,6 +21,8 @@ import numpy as np
 import cv2 as cv
 import os
 import json
+import sys
+import shutil
 
 # Termination criteria for corner refinement: stop after 30 iters or epsilon < 1e-3
 criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -35,24 +37,41 @@ objpoints = []  # 3D points in real world (same objp for each successful frame)
 imgpoints = []  # 2D points detected in the image
 
 # GStreamer pipeline for Jetson/Linux. Requires OpenCV GStreamer support.
-# Tip: 'format' key is commonly used; verify 'fomat' vs 'format' in your env.
 pipeline = ' ! '.join([
     "v4l2src device=/dev/video0",
-    "video/x-raw, fomat=YUYV, width=1600, height=896, framerate=15/2",
+    "video/x-raw, format=YUYV, width=1600, height=896, framerate=15/2",  # fix 'format'
     "videoconvert",
     "video/x-raw, format=(string)BGR",
     "appsink drop=true sync=false"
 ])
 
-# Optional: configure camera focus for sharper corners (Linux v4l2 controls)
-os.system("v4l2-ctl -d /dev/video0 -c focus_auto=0")
-os.system("v4l2-ctl -d /dev/video0 -c focus_absolute=0")
-# Read back current settings (for logging/verification)
-os.system("v4l2-ctl -d /dev/video0 -C focus_auto")
-os.system("v4l2-ctl -d /dev/video0 -C focus_absolute")
+is_windows = sys.platform.startswith("win")
+has_v4l2ctl = shutil.which("v4l2-ctl") is not None
 
-# Open the camera using the pipeline
-cam = cv.VideoCapture(pipeline, cv.CAP_GSTREAMER)
+# Optional: configure camera focus (Linux/Jetson only)
+if not is_windows and has_v4l2ctl:
+    os.system("v4l2-ctl -d /dev/video0 -c focus_auto=0")
+    os.system("v4l2-ctl -d /dev/video0 -c focus_absolute=0")
+    os.system("v4l2-ctl -d /dev/video0 -C focus_auto")
+    os.system("v4l2-ctl -d /dev/video0 -C focus_absolute")
+
+# Open the camera using the appropriate backend
+if is_windows:
+    # Use DirectShow on Windows
+    cam = cv.VideoCapture(0, cv.CAP_DSHOW)
+    cam.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
+    cam.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
+    # Disable autofocus if supported
+    cam.set(cv.CAP_PROP_AUTOFOCUS, 0)
+    cam.set(cv.CAP_PROP_FOCUS, 0)  # may be ignored by some drivers
+else:
+    # Use GStreamer pipeline on Jetson/Linux
+    cam = cv.VideoCapture(pipeline, cv.CAP_GSTREAMER)
+
+# Create a preview window and UI state
+cv.namedWindow("Calibration", cv.WINDOW_NORMAL)
+cv.resizeWindow("Calibration", 1280, 720)
+samples = 0
 
 while True:
     # Grab a frame
@@ -65,37 +84,54 @@ while True:
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
     # Find the chessboard inner corners (pattern size: 7 columns x 5 rows)
-    ret, corners = cv.findChessboardCorners(gray, (7, 5), None)
+    found, corners = cv.findChessboardCorners(gray, (7, 5), None)
 
-    # If found, refine corner locations and accumulate points
-    if ret is True:
-        objpoints.append(objp)
-
+    corners2 = None
+    if found:
         # Subpixel refinement of detected corners
         corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
-        imgpoints.append(corners2)
-
         # Visualize detected corners on the image
-        cv.drawChessboardCorners(img, (7, 5), corners2, ret)
-        cv.imshow('img', img)
+        cv.drawChessboardCorners(img, (7, 5), corners2, found)
+        status_msg = "Pattern FOUND - press C to capture"
+        status_color = (0, 200, 0)
+    else:
+        status_msg = "Pattern not found"
+        status_color = (0, 0, 255)
 
-        # Wait 500 ms; press 'q' to finish collection and calibrate
-        key = cv.waitKey(500)
-        if key == ord('q'):
-            break
+    # HUD overlay
+    cv.putText(img, f"Samples: {samples}", (10, 30), cv.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2, cv.LINE_AA)
+    cv.putText(img, status_msg, (10, 60), cv.FONT_HERSHEY_SIMPLEX, 0.7, status_color, 2, cv.LINE_AA)
+    cv.putText(img, "C=Capture  Q=Calibrate+Save  ESC=Quit", (10, 90), cv.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1, cv.LINE_AA)
 
-# Cleanup windows
+    # Show preview
+    cv.imshow("Calibration", img)
+    key = cv.waitKey(1) & 0xFF
+
+    # Capture a sample when pattern is found
+    if key == ord('c') and found and corners2 is not None:
+        objpoints.append(objp.copy())
+        imgpoints.append(corners2)
+        samples += 1
+
+    # Calibrate and save
+    elif key == ord('q'):
+        break
+
+    # Quit without saving
+    elif key == 27:  # ESC
+        objpoints.clear()
+        imgpoints.clear()
+        break
+
+# Cleanup window
 cv.destroyAllWindows()
 
 # Calibrate using all collected frames.
 # gray.shape[::-1] supplies (width, height). Requires at least one detection.
 if not objpoints or not imgpoints:
-    raise RuntimeError("No corners collected; cannot calibrate.")
+    raise RuntimeError("No samples captured; press 'c' when the pattern is found.")
 ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(
-    objpoints,        # list of 3D object points (len = num successful frames)
-    imgpoints,        # list of 2D image points
-    gray.shape[::-1], # image size (width, height)
-    None, None
+    objpoints, imgpoints, gray.shape[::-1], None, None
 )
 
 # Save calibration to JSON (NumPy arrays converted to lists for JSON compatibility)

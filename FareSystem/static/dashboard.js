@@ -122,18 +122,23 @@ function generateTeamElement(team, id) {
 }
 
 async function updateTeams(){
-    let req = await fetch("http://localhost:5000/dashboard/teams");
-    let data = await req.json();
+    const req = await fetch("/dashboard/teams"); // relative URL
+    const data = await req.json();
 
-    activeIDs = []
+    // Sort teams numerically by team.number
+    const sorted = Array.isArray(data)
+        ? data.slice().sort((a, b) => Number(a.number) - Number(b.number))
+        : [];
 
-    for(var team of data){
+    const orderIds = [];
+
+    for (var team of sorted){
         let num = team.number;
         let element = document.getElementById(`team-${num}`);
         if(element == null){
             element = generateTeamElement(team, `team-${num}`)
         }
-        activeIDs.push(element.id)
+        orderIds.push(element.id);
 
         document.getElementById(`team-${team.number}-money`).innerText = `\$${team.money.toFixed(0)}`;
         document.getElementById(`team-${team.number}-reputation`).innerText = `${team.karma}%`;
@@ -141,6 +146,7 @@ async function updateTeams(){
         document.getElementById(`team-${team.number}-x`).innerText = team.position.x.toFixed(2);
         document.getElementById(`team-${team.number}-y`).innerText = team.position.y.toFixed(2);
 
+        // PRESERVED: last position update timing and color
         let posttime = document.getElementById(`team-${team.number}-postime`);
         timeDelta = -getTimeUntil(team.lastPosUpdate) * 1000;
 
@@ -156,6 +162,7 @@ async function updateTeams(){
         else
             posttime.style.color = "unset";
 
+        // PRESERVED: last status ping timing and color
         let status = document.getElementById(`team-${team.number}-status`)
         timeDelta = -getTimeUntil(team.lastStatus) * 1000;
 
@@ -172,24 +179,73 @@ async function updateTeams(){
             status.style.color = "unset";
     }
 
-    // Prune teams no longer active
-    for(var child of teamsDiv.childNodes){
-        // Find team elements, and remove those that aren't wanted
-        if(child.id != undefined && child.id.startsWith("team")){
-            if(activeIDs.indexOf(child.id) == -1){
-                teamsDiv.removeChild(child);
-            }
+    // Reorder DOM to match sorted order (preserves existing nodes/content)
+    const container = teamsDiv || document.getElementById("teams");
+    if (container) {
+        const header = container.querySelector(".team.header");
+        const frag = document.createDocumentFragment();
+        for (const id of orderIds) {
+            const node = document.getElementById(id);
+            if (node) frag.appendChild(node);
+        }
+        container.textContent = "";
+        if (header) container.appendChild(header);
+        container.appendChild(frag);
+    }
+
+    // Prune any stale team nodes not in the latest data
+    const host = teamsDiv || document.getElementById("teams");
+    for (const child of Array.from(host.children)) {
+        if (child.id && child.id.startsWith("team-") && !orderIds.includes(child.id)) {
+            child.remove();
         }
     }
 }
 
-function addTeam(){
-    let input = document.getElementById("add-team-number");
-    fetch(`/Lab/AddTeam/${input.value}`);
+
+async function refreshMode() {
+  const labControls = document.getElementById('lab-team-buttons');
+  try {
+    const res = await fetch('/match');
+    const data = await res.json();
+    const mode = String((data && data.mode) || '').toLowerCase();
+    if (labControls) labControls.style.display = (mode === 'lab') ? '' : 'none';
+  } catch (e) {
+    if (labControls) labControls.style.display = 'none';
+    console.warn('Failed to fetch /match', e);
+  }
 }
-function removeTeam(team){
-    fetch(`/Lab/RemoveTeam/${team}`);
+
+async function addTeam() {
+  const input = document.getElementById('add-team-number');
+  if (!input) return;
+  const num = parseInt(input.value, 10);
+  if (!Number.isInteger(num) || num <= 0) {
+    alert('Enter a valid positive team number.');
+    return;
+  }
+  try {
+    const res = await fetch(`/Lab/AddTeam/${num}`, { method: 'GET' });
+    const text = await res.text();
+    if (!res.ok) throw new Error(text || `HTTP ${res.status}`);
+    input.value = '';
+    await updateTeams(); // repopulate table
+  } catch (e) {
+    console.error(e);
+    alert(`Failed to add team: ${e.message}`);
+  }
 }
+
+// Ensure initial load populates panes and toggles LAB controls
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof updateFares === 'function') updateFares();
+  if (typeof updateTeams === 'function') updateTeams();
+  if (typeof refreshMode === 'function') {
+    refreshMode();
+    setInterval(refreshMode, 5000);
+  }
+});
+
 function configureMatch(){
     fetch("/Lab/ConfigMatch", {
         method: "post",
@@ -232,16 +288,34 @@ async function updateMatchInfo(){
 }
 
 window.onload = () => {
-    activeFareDiv = document.getElementById("active-fares");
-    pastFareDiv = document.getElementById("past-fares");
-    pastFareDivider = document.getElementById("fare-divider");
-    teamsDiv = document.getElementById("teams");
+  activeFareDiv = document.getElementById("active-fares");
+  pastFareDiv = document.getElementById("past-fares");
+  pastFareDivider = document.getElementById("fare-divider");
+  teamsDiv = document.getElementById("teams");
 
-    setInterval(() => {
-        updateFares();
-        updateMatchInfo();
-    }, 1000);
-    setInterval(() => {
-        updateTeams();
-    }, 100);
+  setInterval(() => {
+    updateFares();
+    updateMatchInfo();
+  }, 1000);
+
+  // poll teams once per second (was 100ms)
+  setInterval(() => {
+    updateTeams();
+  }, 1000);
+
+  // initial render
+  updateTeams();
+  refreshMode();
+};
+
+async function removeTeam(teamNumber) {
+  try {
+    const res = await fetch(`/Lab/RemoveTeam/${teamNumber}`, { method: 'GET' });
+    const text = await res.text();
+    if (!res.ok) throw new Error(text || `HTTP ${res.status}`);
+    await updateTeams();
+  } catch (e) {
+    console.error(e);
+    alert(`Failed to remove team: ${e.message}`);
+  }
 }

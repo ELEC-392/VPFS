@@ -1,78 +1,62 @@
 <!doctype HTML>
 <html>
-    <head>
-        <title>Dashboard | FMS</title>
-        <link rel="stylesheet" type="text/css" href="/static/dashboard.css" />
-        <script src="/static/dashboard.js"></script>
-    </head>
-    <body>
-        <h1 style="grid-area:title" id="title">Dashboard</h1>
-        <div style="grid-area:match">
-            <span id="match-status">
-                Match ##, ###s
-            </span>
-            <span id="match-config">
-                <br/>
-                Num:
-                <input id="match-num" type="number" style="width:5em"/>
-                Duration:
-                <input id="match-duration" type="number" style="width:5em"/>
-                <button onclick="configureMatch()">Apply</button>
-            </span>
-            <button onclick="startMatch()">Start Match</button>
+  <head>
+    <!-- Load Open Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <title>Dashboard | FMS</title>
+    <link rel="stylesheet" type="text/css" href="/static/dashboard.css" />
+  </head>
+  <body>
+  <div class="app">
+    <div class="page-header" style="grid-area:title">
+      <img class="page-logo" src="/static/img/Queens-smith-engineering-logo-lockup-electricalandcomputerengineering-horz-digital-blue.png" alt="Logo" />
+      <h1 id="title">Dashboard</h1>
+    </div>
+
+    <div style="grid-area:match">
+      <span id="match-status">Match --, Ready</span><br/>
+      Num: <input id="match-num" type="number" style="width:5em"/>
+      Duration: <input id="match-duration" type="number" style="width:5em"/>
+      <button onclick="configureMatch()">Apply</button>
+      <button onclick="startMatch()">Start Match</button>
+    </div>
+
+    <div style="grid-area:fares">
+      <h2>Active Fares</h2>
+      <div id="active-fares">
+        <div class="fare header">
+          <h3>#</h3><span>Route</span><span>Pay/Rep</span><span>Type</span><span>Claim</span>
+          <span>In Pos</span><span>Picked</span><span>Done</span><span>Paid</span><span>Expiry</span>
         </div>
-        <div style="grid-area:teams">
-            <h2>Teams</h2>
-            <div id="teams">
-                <div id="lab-team-buttons" style="display:none">
-                    Add Team:
-                    <input id="add-team-number" type="number" size="4" />
-                    <button onclick="addTeam()">Add</button>
-                </div>
-                <!-- <div class="team" id="team-7">
-                    <h3 style="grid-area: title;">7 - Team Name</h3>
-                    <div style="grid-area: money;">
-                        Money: <span id="team-7-money">5000</span><br/>
-                        Reputation: <span id="team-7-reputation">100%</span><br/>
-                        Current Fare: <span id="team-7-fare">None</span>
-                    </div>
-                    <div style="grid-area: position;">
-                        X <span id="team-7-x">100</span><br/>
-                        Y <span id="team-7-y">200</span><br/>
-                        Last Update: <span id="team-7-postime">100s</span>
-                    </div>
-                </div> -->
-            </div>
+        <div class="fare-list"></div> <!-- JS renders rows here -->
+      </div>
+
+      <h2>Past Fares</h2>
+      <div id="past-fares">
+        <div class="fare header">
+          <h3>#</h3><span>Route</span><span>Pay/Rep</span><span>Type</span><span>State/Expiry</span>
         </div>
-        <div style="grid-area:fares">
-            <h2>Active Fares</h2>
-            <div id="active-fares">
-                <div class="fare header">
-                    <h3>#</h3>
-                    <span class="tofrom">Route</span>
-                    <span>Pay/Rep</span>
-                    <span>Type</span>
-                    <span>Claim</span>
-                    <span>In Pos</span>
-                    <span>Picked</span>
-                    <span>Done</span>
-                    <span>Paid</span>
-                    <span>State</span>
-                </div>
-                <!-- rows injected by JS -->
-            </div>
-            <h2>Past Fares</h2>
-            <div id="past-fares">
-                <div class="fare header">
-                    <h3>#</h3>
-                    <span class="tofrom">Route</span>
-                    <span>Pay/Rep</span>
-                    <span>Type</span>
-                    <span>State</span>
-                </div>
-                <div id="fare-divider"></div>
-                <!-- rows injected by JS -->
-            </div>
-        </div>
-    </body>
+        <div class="fare-list"></div> <!-- JS renders rows here -->
+      </div>
+    </div>
+
+    <div style="grid-area:teams">
+      <h2>Teams</h2>
+
+      <!-- LAB-only controls -->
+      <div id="lab-team-buttons" class="team-controls" style="display:none">
+        <label for="add-team-number">Add Team:</label>
+        <input id="add-team-number" type="number" size="4" />
+        <button type="button" onclick="addTeam()">Add</button>
+      </div>
+
+      <!-- Teams list (cards will be appended here) -->
+      <div id="teams"></div>
+    </div>
+  </div>
+  <script src="/static/dashboard.js" defer></script>
+</body>
 </html>

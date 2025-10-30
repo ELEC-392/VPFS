@@ -1,11 +1,56 @@
-body {
-    font-family: sans-serif;
-    display: grid;
-    grid-template-areas: "title . fares" "match . fares" "teams . fares";
-    grid-template-rows: auto auto 100%;
-    grid-template-columns: 35% 10% 55%;
-    padding: 2em;
+html, body { height: 100%; }
+body { background-color: white; overflow: hidden; } /* no page scroll */
+
+/* Grid fills the viewport */
+.app {
+  font-family: sans-serif;
+  display: grid;
+  grid-template-areas: "title . fares" "match . fares" "teams . fares";
+  grid-template-rows: auto auto 1fr; /* last row stretches */
+  grid-template-columns: 35% 10% 55%;
+  padding: 2em;
+  height: 100vh; /* fill screen */
 }
+
+/* Allow grid children to shrink so inner panes can scroll */
+.app > div { min-height: 0; }
+
+/* FARES pane layout: header/active list fixed, past list takes remaining and scrolls */
+.app [style*="grid-area:fares"] {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0; /* critical for nested scrolling */
+}
+#active-fares { flex: 0 0 auto; }
+#past-fares  {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;         /* hidden by default */
+  scrollbar-gutter: stable; /* optional: reserve space for scrollbar */
+}
+#past-fares:hover { overflow: auto; } /* scroll on hover */
+
+/* TEAMS pane: list fills and scrolls on hover */
+.app [style*="grid-area:teams"] {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+#teams {
+  display: grid;
+  grid-template-columns: 1fr;           /* one column; adjust to 2 for denser view */
+  gap: 0.5rem;
+  padding-right: 0.25rem;
+  box-sizing: border-box;
+}
+#teams {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 3.0rem;
+}
+#teams:hover { overflow: auto; }
 
 h3 {
     margin: 0
@@ -27,18 +72,53 @@ h3 {
 }
 
 .team {
-    padding: 1em;
-    display: grid;
-    grid-template-areas: 
-        "title title status"
-        "money position buttons"
+  display: grid;
+  grid-template-columns: 1fr auto;      /* left info + right actions */
+  grid-template-areas:
+    "title buttons"
+    "money buttons"
+    "position buttons"
+    "status buttons";
+  gap: 0.25rem 1rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #e6e8eb;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
 
-.team .team-buttons {
-    display: flex;
-    flex-direction: column-reverse;
-    align-items: flex-end;
-    grid-area: buttons;
+/* Team row header sticks while the pane scrolls */
+#teams .team.header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: white;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.15);
+}
+
+.team h3 { grid-area: title; margin: 0; font-weight: 600; }
+
+/* First column is the team number (h3) */
+#teams .team > h3 {
+  grid-column: 1;
+  margin: 0;
+  text-align: right;
+}
+
+/* Map typical fields into columns (adjust to your DOM ids) */
+#teams .team [id$="-money"]         { grid-column: 2; text-align: right; }
+#teams .team [id$="-rep"]           { grid-column: 3; text-align: right; }
+#teams .team [id$="-fare"]          { grid-column: 4; }
+#teams .team [id$="-position"]      { grid-column: 5; }
+#teams .team [id$="-lastPosUpdate"] { grid-column: 6; }
+#teams .team [id$="-lastStatus"]    { grid-column: 7; }
+
+/* Buttons go to the last column, aligned to the right */
+#teams .team .team-buttons {
+  grid-column: 8;
+  justify-self: end;
+  display: flex;
+  gap: 0.25rem;
 }
 
 .fare {
@@ -91,4 +171,60 @@ h3 {
     width: 100%;
     background-color: black;
     margin: 5px 0;
+}
+
+/* Fixed, semi-transparent logo that stays put on scroll */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url("/static/img/logo.png") no-repeat left 1rem bottom 1rem;
+  background-size: clamp(300px, 25vmin, 600px);
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0; /* behind content */
+}
+
+/* Ensure content paints above the watermark */
+body > * { position: relative; z-index: 1; }
+
+/* Keep header compact and logo small */
+.page-header {
+  display: flex;
+  flex-direction: column;   /* logo above title */
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.page-logo {
+  height: clamp(28px, 10vw, 125px);
+  width: auto;
+  display: block;
+}
+
+/* Sticky headers for fare tables */
+#active-fares .fare.header,
+#past-fares .fare.header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: white;          /* match page background */
+  /* optional cosmetics */
+  box-shadow: 0 1px 0 rgba(0,0,0,0.15);
+}
+
+/* Sticky header for Teams list (if you add one inside #teams) */
+#teams .teams-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: white;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.15);
+}
+
+.team-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
