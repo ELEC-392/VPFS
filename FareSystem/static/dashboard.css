@@ -178,14 +178,15 @@ body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: url("/static/img/logo.png") no-repeat left 1rem bottom 1rem;
-  background-size: clamp(300px, 25vmin, 600px);
+  background-image: url("/static/img/logo.png");
+  background-repeat: no-repeat;
+  background-position: center center;   /* centered on screen */
+  background-size: clamp(500px, 25vmin, 1000px);
   opacity: 0.08;
   pointer-events: none;
-  z-index: 0; /* behind content */
+  z-index: 0;
 }
-
-/* Ensure content paints above the watermark */
+/* keep content above watermark */
 body > * { position: relative; z-index: 1; }
 
 /* Keep header compact and logo small */
