@@ -18,10 +18,10 @@ class ReferenceTag:
             [0, 0, 0, 1]
         ])
 
-refTags: Dict[int, ReferenceTag] = { }
+ref_tags: Dict[int, ReferenceTag] = { }
 
 def _addTag(tag: ReferenceTag):
-    refTags[tag.id] = tag
+    ref_tags[tag.id] = tag
 
 # Currently just one tag, ID 0, placed at origin
 # _addTag(ReferenceTag(0, 0, 0))

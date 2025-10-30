@@ -22,7 +22,7 @@ def authenticate(code: str, mode: Union[OperatingMode, str]) -> int:
     """
     is_match = (
             isinstance(mode, OperatingMode) and mode is OperatingMode.MATCH
-        ) or (isinstance(mode, str) and mode.lower() == "match")
+        ) or (isinstance(mode, str) and mode.lower() == "Match")
 
     # For match mode, check against auth code dict
     if is_match:
