@@ -6,25 +6,27 @@ Resolves a team number from a provided code based on operating mode:
 Returns -1 on failure.
 """
 
+from params import OperatingMode
+from typing import Union
+
 _authCodes: dict[str : int] = {
     "asdf" : 7
 }
 
-def authenticate(code: str, mode: str) -> int:
+def authenticate(code: str, mode: Union[OperatingMode, str]) -> int:
     """
     Get the team corresponding to a given authentication code
     :param code: Provided authentication code
     :param mode: Server operating mode
     :returns: Corresponding team number, or -1 if not found
     """
+    is_match = (
+            isinstance(mode, OperatingMode) and mode is OperatingMode.MATCH
+        ) or (isinstance(mode, str) and mode.lower() == "match")
 
     # For match mode, check against auth code dict
-    if mode == "match":
-        if code in _authCodes:
-            return _authCodes[code]
-        else:
-            return -1
-    # For home and lab modes don't need auth codes
+    if is_match:
+        return _authCodes.get(code, -1)
     else:
         try:
             return int(code)

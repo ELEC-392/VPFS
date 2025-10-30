@@ -47,25 +47,31 @@
         <div style="grid-area:fares">
             <h2>Active Fares</h2>
             <div id="active-fares">
-                <!-- <div class="fare" id="fare-1">
-                    <h3>1:</h3>
-                    <span class="tofrom">5,5 -> 0,0</span>
-                    <span id="fare-1-claim">Team 5</span>
-                    <span id="fare-1-inPosition" class="bg-warn">In Position</span>
-                    <span id="fare-1-pickedUp" class="bg-ok">Picked Up</span>
-                    <span id="fare-1-completed" class="bg-ok">Completed</span>
-                    <span id="fare-1-paid" class="bg-ok">Paid</span>
-                    <span id="fare-1-expiry">Expires in 100s</span>
-                </div> -->
+                <div class="fare header">
+                    <h3>#</h3>
+                    <span class="tofrom">Route</span>
+                    <span>Pay/Rep</span>
+                    <span>Type</span>
+                    <span>Claim</span>
+                    <span>In Pos</span>
+                    <span>Picked</span>
+                    <span>Done</span>
+                    <span>Paid</span>
+                    <span>State</span>
+                </div>
+                <!-- rows injected by JS -->
             </div>
             <h2>Past Fares</h2>
             <div id="past-fares">
+                <div class="fare header">
+                    <h3>#</h3>
+                    <span class="tofrom">Route</span>
+                    <span>Pay/Rep</span>
+                    <span>Type</span>
+                    <span>State</span>
+                </div>
                 <div id="fare-divider"></div>
-                <!-- <div class="fare" id="fare-2">
-                    <h3>2:</h3>
-                    <span class="tofrom">5,5 -> 0,0</span>
-                    <span id="fare-1-expiry">Expired</span>
-                </div> -->
+                <!-- rows injected by JS -->
             </div>
         </div>
     </body>

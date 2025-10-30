@@ -42,20 +42,49 @@ h3 {
 }
 
 .fare {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 1em;
+    display: grid;
+    align-items: left;
+    column-gap: 0.1rem;
+}
+
+#active-fares .fare {
+    /* IDX | ROUTE | PAY/REP | TYPE | CLAIM | INPOS | PICKED | DONE | PAID | EXPIRY */
+    grid-template-columns: 4ch 15ch 10ch 12ch 8ch 8.1ch 7ch 7ch 8ch 15ch;
+}
+
+#past-fares .fare {
+    /* IDX | ROUTE | PAY/REP | TYPE | EXPIRY */
+    grid-template-columns: 4ch 13ch 15ch 15ch 15ch;
 }
 
 .fare>h3 {
-    padding-left: 0.5em;
+    padding-left: 0.1rem;
+    margin: 0;
+    text-align: left
 }
+
+/* Map spans to explicit columns by ID suffix so order doesn't matter */
+#active-fares .fare [id$="-route"]      { grid-column: 2; text-align: left; }
+#active-fares .fare [id$="-pay"]        { grid-column: 3; text-align: left; }
+#active-fares .fare [id$="-modifier"]   { grid-column: 4; text-align: left; }
+#active-fares .fare [id$="-claim"]      { grid-column: 5; text-align: left; }
+#active-fares .fare [id$="-inPosition"] { grid-column: 6; text-align: left; }
+#active-fares .fare [id$="-pickedUp"]   { grid-column: 7; text-align: left; }
+#active-fares .fare [id$="-completed"]  { grid-column: 8; text-align: left; }
+#active-fares .fare [id$="-paid"]       { grid-column: 9; text-align: left; }
+#active-fares .fare [id$="-expiry"]     { grid-column: 10; text-align: left; }
+
+#past-fares .fare [id$="-route"]      { grid-column: 2; text-align: left; }
+#past-fares .fare [id$="-pay"]        { grid-column: 3; text-align: left; }
+#past-fares .fare [id$="-modifier"]   { grid-column: 4; text-align: left; }
+#past-fares .fare [id$="-expiry"]     { grid-column: 5; text-align: left; }
 
 .fare span {
     padding: 0.25em 0.75em;
-    border-radius: 0.5em;
+    border-radius: 0.5rem;
 }
+
+.fare.header { font-weight: 600; opacity: 0.85; }
 
 #fare-divider {
     height: 1px;

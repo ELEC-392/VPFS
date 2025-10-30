@@ -1,4 +1,12 @@
 from typing import Final
+from enum import Enum
+
+class OperatingMode(str, Enum):
+    LAB = "Lab"
+    HOME = "Home"
+    MATCH = "Match"
+
+MODE = OperatingMode.LAB
 
 POSITION_TOLERANCE = 0.15
 PICKUP_DURATION = 5
