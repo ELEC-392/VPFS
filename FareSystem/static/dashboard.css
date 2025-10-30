@@ -28,6 +28,7 @@ body { background-color: white; overflow: hidden; } /* no page scroll */
   min-height: 0;
   overflow: hidden;         /* hidden by default */
   scrollbar-gutter: stable; /* optional: reserve space for scrollbar */
+  padding-bottom: 3.0rem;
 }
 #past-fares:hover { overflow: auto; } /* scroll on hover */
 

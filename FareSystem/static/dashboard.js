@@ -20,17 +20,13 @@ function getTimeUntil(utcTimeSeconds){
 function generateFareElement(fare, id){
     let type = "Normal";
     switch(fare.modifiers){
-        case 1:
-            type = "Subsidized"
-            break;
-        case 2:
-            type = "Senior"
-            break;
+        case 1: type = "Subsidized"; break;
+        case 2: type = "Senior"; break;
     }
-    let element = document.createElement("div");
-    element.classList.add("fare");
-    element.id = id;
-    element.innerHTML = `
+    const el = document.createElement("div");
+    el.classList.add("fare");
+    el.id = id;
+    el.innerHTML = `
     <h3>${fare.id}:</h3>
     <span class="tofrom">${fare.src.x.toFixed(0)},${fare.src.y.toFixed(0)} -> ${fare.dest.x.toFixed(0)},${fare.dest.y.toFixed(0)}</span>
     <span id="fare-${fare.id}-pay" style="padding:0">\$${fare.pay.toFixed(0)} / ${fare.reputation}%</span>
@@ -41,57 +37,69 @@ function generateFareElement(fare, id){
     <span id="fare-${fare.id}-paid" style="display:none" class="bg-ok">Paid</span>
     <span id="fare-${fare.id}-inPosition" style="display:none" class="bg-warn">In Position</span>
     <span id="fare-${fare.id}-expiry" style="display:none">Expires in </span>
-    `
-
-    // if(fare.active)
-        activeFareDiv.appendChild(element);
-    // else
-    //     pastFareDiv.appendChild(element);
-
-    return element;
+    `;
+    // Place into the correct list at creation time
+    const isExpired = getTimeUntil(fare.expiry) <= 0;
+    const isActive = (fare.active !== undefined) ? !!fare.active : (!isExpired && !fare.completed && !fare.paid);
+    (isActive ? activeFareDiv : pastFareDiv).appendChild(el);
+    return el;
 }
 
 async function updateFares(){
-    let req = await fetch("http://localhost:5000/dashboard/fares");
-    let data = await req.json();
+    const req = await fetch("/dashboard/fares", { cache: "no-store" });
+    const payload = await req.json();
 
-    for(var fare of data){
-        let id = fare.id;
-        let element = document.getElementById(`fare-${id}`);
-        if(element == null){
-            element = generateFareElement(fare, `fare-${id}`)
+    // Support both shapes: array of fares, or { active:[], past:[] }
+    const fares = Array.isArray(payload)
+        ? payload
+        : ([]).concat(payload.active || payload.current || [], payload.past || payload.finished || []);
+
+    for (const fare of fares){
+        const id = fare.id;
+        let el = document.getElementById(`fare-${id}`);
+        if (!el) el = generateFareElement(fare, `fare-${id}`);
+
+        const isExpired = getTimeUntil(fare.expiry) <= 0;
+        const isActive = (fare.active !== undefined) ? !!fare.active : (!isExpired && !fare.completed && !fare.paid);
+
+        // Move between lists if needed
+        if (isActive && el.parentElement !== activeFareDiv) {
+            activeFareDiv.appendChild(el);
+        } else if (!isActive && el.parentElement !== pastFareDiv) {
+            // Keep claimed above divider, unclaimed below
+            if (fare.claimed && pastFareDivider) {
+                pastFareDiv.insertBefore(el, pastFareDivider);
+            } else if (pastFareDivider) {
+                pastFareDiv.insertBefore(el, pastFareDivider.nextSibling);
+            } else {
+                pastFareDiv.appendChild(el);
+            }
         }
 
-        // If fare is no longer active, move it
-        if(element.parentElement == activeFareDiv && !fare.active){
-            if(fare.claimed)
-                pastFareDiv.insertBefore(element, pastFareDivider)
-            else
-                pastFareDiv.insertBefore(element, pastFareDivider.nextSibling);
+        // Update fields
+        const claimEl = document.getElementById(`fare-${id}-claim`);
+        const expiryEl = document.getElementById(`fare-${id}-expiry`);
+
+        if (fare.claimed){
+            claimEl.innerText = `Team ${fare.team}`;
+            setVisibility(claimEl, true);
+            setVisibility(expiryEl, false);
+        } else {
+            const delta = getTimeUntil(fare.expiry);
+            if (delta < 0) {
+                expiryEl.innerText = "Expired";
+            } else {
+                expiryEl.innerText = `Expires in ${delta.toFixed(0)}`;
+            }
+            setVisibility(claimEl, false);
+            setVisibility(expiryEl, true);
         }
 
-        team = document.getElementById(`fare-${id}-claim`);
-        expiry = document.getElementById(`fare-${id}-expiry`);
-        if(fare.claimed){
-            team.innerText = `Team ${fare.team}`
-            setVisibility(team, true)
-            setVisibility(expiry, false)
-        }
-        else {
-            let delta = getTimeUntil(fare.expiry);
-            if(delta < 0)
-                expiry.innerText = "Expired"
-            else
-                expiry.innerText = `Expires in ${delta.toFixed(0)}`
-            setVisibility(team, false)
-            setVisibility(expiry, true)
-        }
-
-        setVisibility(document.getElementById(`fare-${id}-inPosition`), fare.inPosition);
-        setVisibility(document.getElementById(`fare-${id}-pickedUp`), fare.pickedUp);
-        setVisibility(document.getElementById(`fare-${id}-completed`), fare.completed);
-        setVisibility(document.getElementById(`fare-${id}-paid`), fare.paid);
-        setVisibility(document.getElementById(`fare-${id}-modifier`), fare.modifiers != 0);
+        setVisibility(document.getElementById(`fare-${id}-inPosition`), !!fare.inPosition);
+        setVisibility(document.getElementById(`fare-${id}-pickedUp`), !!fare.pickedUp);
+        setVisibility(document.getElementById(`fare-${id}-completed`), !!fare.completed);
+        setVisibility(document.getElementById(`fare-${id}-paid`), !!fare.paid);
+        setVisibility(document.getElementById(`fare-${id}-modifier`), (fare.modifiers || 0) !== 0);
     }
 }
 
@@ -201,7 +209,6 @@ async function updateTeams(){
         }
     }
 }
-
 
 async function refreshMode() {
   const labControls = document.getElementById('lab-team-buttons');
