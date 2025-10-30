@@ -1,7 +1,14 @@
+"""Authentication helpers for VPFS.
+
+Resolves a team number from a provided code based on operating mode:
+- match: validate the code against an internal mapping (_authCodes).
+- lab/home: interpret the input as a team number string.
+Returns -1 on failure.
+"""
+
 _authCodes: dict[str : int] = {
     "asdf" : 7
 }
-
 
 def authenticate(code: str, mode: str) -> int:
     """

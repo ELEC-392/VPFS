@@ -1,10 +1,10 @@
 from attr import dataclass
 
-from Utils import Point
-from Fare import Fare, FareType
+from utils import Point
+from fare import Fare, FareType
 import random
 
-from FareProbability import FareProbability
+from fare_prob import FareProbability
 
 @dataclass
 class SpawnPoint:

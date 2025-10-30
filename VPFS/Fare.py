@@ -1,12 +1,18 @@
 import random
 
-from Utils import Point
-from Team import Team
+from utils import Point
+from team import Team
 import time
 from enum import Enum
-
-POSITION_TOLERANCE = 0.15
-PICKUP_DURATION = 5
+from params import (
+    BASE_FARE, 
+    DIST_FARE_NORMAL, 
+    DIST_FARE_SUBSIDIZED, 
+    REPUTATION_NORMAL, 
+    REPUTATION_SUBSIDIZED,
+    POSITION_TOLERANCE,
+    PICKUP_DURATION 
+)
 
 class FareType(Enum):
     NORMAL = 0
@@ -14,19 +20,19 @@ class FareType(Enum):
     SENIOR = 2
 
     def get_base_fare(self) -> float:
-        return 10
+        return BASE_FARE
 
     def get_dist_fare(self) -> float:
         if self is FareType.SUBSIDIZED:
-            return 5
-        return 10
+            return DIST_FARE_SUBSIDIZED
+        return DIST_FARE_NORMAL
 
     def get_reputation(self) -> float:
         if self is FareType.SUBSIDIZED:
-            return 10
+            return REPUTATION_SUBSIDIZED
         elif self is FareType.SENIOR:
-            return 10
-        return 5
+            return REPUTATION_SUBSIDIZED
+        return REPUTATION_NORMAL
 
     def get_load_time(self) -> float:
         if self is FareType.SENIOR:

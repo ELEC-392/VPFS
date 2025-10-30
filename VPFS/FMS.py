@@ -1,12 +1,12 @@
 import time
 
-from Faregen import generate_fare
-from Utils import Point
-from Fare import Fare
-from Team import Team
+from fare_gen import generate_fare
+from utils import Point
+from fare import Fare
+from team import Team
 from threading import Lock
 
-from Fare import FareType
+from fare import FareType
 
 matchRunning = False
 matchNum = 0

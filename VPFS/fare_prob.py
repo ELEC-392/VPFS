@@ -1,7 +1,6 @@
-from Fare import FareType
+from fare import FareType
 from typing import Self, Tuple
 import random
-
 
 class FareProbability:
     def __init__(self,

@@ -1,55 +1,59 @@
 # Vehicle Positioning and Fare System (VFPS)
 
-This repository is the official Vehicle Positioning and Fare System (VPFS) for use in ELEC 392.
-
-It is for use by the competition, but also for at-home and in-lab testing of teams' vehicles.
+This repository is the official Vehicle Positioning and Fare System (VPFS) that is used in ELEC 392. The VPFS is a framework that allows your vehicle to take fares and know where it is on the map. This code is used for the competition, but can also be used for  for at-home and in-lab testing of teams' vehicles.
 
 The core module is the main VFPS server. There will be additional modules added for differing modes of vehicle positioning and score display.
 
 ## At-Home Use
 
-### Setup with PyCharm
-This project was developed in PyCharm community, so you should be able to simply open it and run from there.
-
-To launch the VPFS server, simply select the VPFS configuration in the top right and run it.
-
-To test your server, run the command
-```commandline
-curl localhost:5000
-```
-And you should see the response `VFPS is alive`
-
-### Setup with Manual Install (venv)
+### Setup 
 The project was designed for Python 3.12. To check your installation, run
 ```commandline
 py --list
 ```
 If Python 3.12 is not listed, you will need to install it. Note that this may affect which python is your system default if you have other projects that care.
 
-With Python 3.12 installed, open a terminal in your downloaded copy of the repository. 
-Create a venv (Virtual ENVironment), and then activate it using the following commands
-```commandline
-py -3.12 -m venv .venv-vpfs
-.\.venv-vpfs\Scripts\Activate.ps1
+#### PyCharm
+This project was developed in PyCharm community, so you should be able to simply open it and run from there. To launch the VPFS server, simply select the VPFS configuration in the top right and run it.
 
-(For the activation command, .ps1 file is used with powershell, .bat version for CMD)
-```
-If the activation is successful, you should see `(.venv-vpfs)` next to your command prompt.
+#### Command Line Terminal
+Open a terminal in the project root (the outer VPFS folder) and run the main script. Typical steps on Windows include:
 
-Now that the venv is active, we can install the needed pip packages.
-```commandline
-pip install -r requirements.txt
-```
+1. Open PowerShell or cmd. 
+2. Chance the current directory to the project folder (where ever you cloned the repo) using the `cd` command. For example:
+    ```commandline
+    cd "c:\Users\Documents\Courses\ELEC392\devel\VPFS"
+    ```
+3. Create a venv (Virtual ENVironment), and then activate it using the following commands:
 
-Now switch to the VPFS directory and start the program with the command.
-```commandline
-python3 Router.py
-```
+    ```commandline
+    py -3.12 -m venv .venv-vpfs
+    # PowerShell:
+    .venv\Scripts\Activate.ps1
+    # or cmd:
+    .venv\Scripts\activate.bat
+    ```
+    For the activation command, .ps1 file is used with PowerShell, .bat version for CMD.
+
+    If the activation is successful, you should see `(.venv-vpfs)` next to your command prompt.
+
+4. Install dependencies via pip packages:
+    ```commandline
+    pip install -r requirements.txt
+    ```
+
+4. Run the main VPFS server script:
+
+    ```commandline
+    python VPFS/Router.py
+    ````
+### Testing if Server is Up
+
 To test your server, run the command
-```commandline
-curl localhost:5000
+  ```commandline
+  curl localhost:5000
 ```
-And you should see the response `VFPS is alive`
+And you should see the response `VFPS is alive!`. 
 
 ### Connecting your Vehicle
 To connect your vehicle to the VPFS, make sure they are both on the same network.
@@ -60,7 +64,7 @@ Now on your vehicle, run the following command to test the connection, replacing
 ```commandline
 curl [YOUR IP]:5000
 ```
- If everything is working, you should once again see `VFPS is alive`. If this test worked in setup but failed now, it could be one of a few causes
+ If everything is working, you should once again see `VFPS is alive!`. If this test worked in setup but failed now, it could be one of a few causes
 - Your vehicle is on a different network
 - You entered/have the wrong IP address
 - Your server is blocked by a firewall / not accessible outside of localhost
@@ -73,8 +77,7 @@ If you have issues at this step, you can ask for help on OnQ. Make sure to inclu
 Once you have an established connection, use this IP address as the server address in your code.
 
 ### Dashboard Configuration
-Once the VPFS server is running, go to http://localhost:5000/static/dashboard.html to view the dashboard.
-This will provide an overview of the current active match, teams, and fares.
+Once the VPFS server is running, go to http://localhost:5000/static/dashboard.html to view the dashboard. This will provide an overview of the current active match, teams, and fares.
 
 To add your team to the current "match", simply enter your team number and press add. You should see a new entry appear.
 ![Adding team 1](Readme Images/Add Team.png)
@@ -97,7 +100,7 @@ This allows you to see which fares your vehicle is being offered, which one you 
 ![Sample Fare Statuses](Readme Images/Fare Statuses.png)
 
 ### Vehicle Positioning
-An at-home version of the camera system is also available. Full instructions are available under the At-Home Camera System header.
+An at-home version of the camera system is also available. Full instructions are available under the At-Home Camera System heading.
 
 For those who don't have the space or need to set up a full simulation, you can use the dummy WhereAmI system. This allows you to simply enter the coordinates you want the system to think your vehicle is at.
 

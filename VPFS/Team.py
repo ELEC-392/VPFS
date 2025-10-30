@@ -1,6 +1,6 @@
 import time
 
-from Utils import Point
+from utils import Point
 
 class Team:
     def __init__(self, number : int):

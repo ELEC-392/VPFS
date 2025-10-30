@@ -4,11 +4,11 @@ from flask import Flask, jsonify, request
 from flask_socketio import SocketIO
 from jsonschema.exceptions import ValidationError
 
-from Utils import Point
-import FMS
+from utils import Point
+import fms
 from jsonschema import validate
 from threading import Thread
-from Auth import authenticate
+from auth import authenticate
 
 app = Flask(__name__)
 sock = SocketIO(app)
@@ -22,34 +22,34 @@ if operatingMode == "lab":
 
 @app.route("/")
 def serve_root():
-    return "VPFS is alive\n"
+    return "VPFS is alive!\n"
 
 @app.route("/match")
 def serve_status():
     team = authenticate(request.args.get("auth", default=""), operatingMode)
     # Update last poll time
-    if team in FMS.teams:
-        FMS.teams[team].lastStatus = time.time()
-    with FMS.mutex:
+    if team in fms.teams:
+        fms.teams[team].lastStatus = time.time()
+    with fms.mutex:
         return jsonify({
             "mode": operatingMode,
-            "match": FMS.matchNum,
-            "matchStart": FMS.matchRunning,
-            "timeRemain": FMS.matchEndTime - time.time(),
-            "inMatch": team in FMS.teams,
+            "match": fms.matchNum,
+            "matchStart": fms.matchRunning,
+            "timeRemain": fms.matchEndTime - time.time(),
+            "inMatch": team in fms.teams,
             "team": team,
         })
 
 @app.route("/dashboard/teams")
 def serve_teams():
     data = []
-    with FMS.mutex:
+    with fms.mutex:
         # Create list of teams with desired information
-        for team in FMS.teams.values():
+        for team in fms.teams.values():
             data.append({
                 "number": team.number,
                 "money": team.money,
-                "karma": team.karma,
+                "rep": team.karma,
                 "currentFare": team.currentFare,
                 "position": {
                     "x": team.pos.x,
@@ -62,9 +62,9 @@ def serve_teams():
 
 def serve_fares(extended: bool, include_expired: bool):
     data = []
-    with FMS.mutex:
+    with fms.mutex:
         # Create copied list of data with desired information
-        for idx, fare in enumerate(FMS.fares):
+        for idx, fare in enumerate(fms.fares):
             if fare.isActive or include_expired:
                 data.append(fare.to_json_dict(idx, extended))
         return jsonify(data)
@@ -80,14 +80,14 @@ def serve_fares_normal():
 @app.route("/fares/claim/<int:idx>")
 def claim_fare(idx: int):
     team = authenticate(request.args.get("auth", default=""), operatingMode)
-    with FMS.mutex:
+    with fms.mutex:
         success = False
         message = ""
         if team == -1:
             message = "Authentication failed"
-        elif team in FMS.teams.keys():
-            if idx < len(FMS.fares):
-                err = FMS.fares[idx].claim_fare(idx, FMS.teams[team])
+        elif team in fms.teams.keys():
+            if idx < len(fms.fares):
+                err = fms.fares[idx].claim_fare(idx, fms.teams[team])
                 if err is None:
                     success = True
                 else:
@@ -104,15 +104,15 @@ def claim_fare(idx: int):
 
 @app.route("/fares/current/<int:team>")
 def current_fare(team: int):
-    with FMS.mutex:
+    with fms.mutex:
         fare_dict = None
         message = ""
-        if team in FMS.teams.keys():
-            fare_idx = FMS.teams[team].currentFare
+        if team in fms.teams.keys():
+            fare_idx = fms.teams[team].currentFare
             if fare_idx is None:
                 message = f"Team {team} does not have an active fare"
             else:
-                fare = FMS.fares[fare_idx]
+                fare = fms.fares[fare_idx]
                 fare_dict = fare.to_json_dict(fare_idx, True)
         else:
             message = f"Team {team} not in this match"
@@ -127,8 +127,8 @@ def whereami_get(team: int):
     point = None
     last_update : int = 0
     message = ""
-    if team in FMS.teams.keys():
-        team = FMS.teams[team]
+    if team in fms.teams.keys():
+        team = fms.teams[team]
         point = {
             "x": team.pos.x,
             "y": team.pos.y
@@ -176,13 +176,13 @@ def whereami_update(json):
             team = entry['team']
             x = entry['x']
             y = entry['y']
-            if team in FMS.teams.keys():
-                FMS.teams[team].update_position(Point(x, y))
+            if team in fms.teams.keys():
+                fms.teams[team].update_position(Point(x, y))
             else:
                 print(f"Team not in match {team}")
     except ValidationError as e:
         print(f"Validation failed: {e}")
 
 if __name__ == "__main__":
-    Thread(target=FMS.periodic, daemon=True).start()
+    Thread(target=fms.periodic, daemon=True).start()
     sock.run(app, host='0.0.0.0', allow_unsafe_werkzeug=True)
