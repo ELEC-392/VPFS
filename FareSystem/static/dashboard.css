@@ -165,7 +165,11 @@ h3 {
     border-radius: 0.5rem;
 }
 
-.fare.header { font-weight: 600; opacity: 0.85; }
+.fare.header { 
+    font-weight: 600; 
+    opacity: 1.00; 
+    color: white;
+}
 
 #fare-divider {
     height: 1px;
@@ -210,9 +214,9 @@ body > * { position: relative; z-index: 1; }
   position: sticky;
   top: 0;
   z-index: 2;
-  background: white;          /* match page background */
+  background: #002452;          /* match page background */
   /* optional cosmetics */
-  box-shadow: 0 1px 0 rgba(0,0,0,0.15);
+  box-shadow: 0 1px 0 #002452;
 }
 
 /* Sticky header for Teams list (if you add one inside #teams) */
@@ -220,7 +224,7 @@ body > * { position: relative; z-index: 1; }
   position: sticky;
   top: 0;
   z-index: 2;
-  background: white;
+  background: rgb(149, 75, 75);
   box-shadow: 0 1px 0 rgba(0,0,0,0.15);
 }
 

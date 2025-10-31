@@ -1,9 +1,9 @@
 var teamsDiv, activeFareDiv, pastFareDiv, pastFareDivider;
 
 var opMode = "";
-const LAB_OP = "lab";
-const HOME_OP = "home";
-const MATCH_OP = "match";
+const LAB_OP = "Lab";
+const HOME_OP = "Home";
+const MATCH_OP = "Match";
 
 function setVisibility(element, visible){
     if(!visible)
@@ -295,6 +295,7 @@ async function updateMatchInfo(){
 }
 
 window.onload = () => {
+  opMode = LAB_OP;
   activeFareDiv = document.getElementById("active-fares");
   pastFareDiv = document.getElementById("past-fares");
   pastFareDivider = document.getElementById("fare-divider");
@@ -305,7 +306,7 @@ window.onload = () => {
     updateMatchInfo();
   }, 1000);
 
-  // poll teams once per second (was 100ms)
+  // poll teams once per second
   setInterval(() => {
     updateTeams();
   }, 1000);
@@ -323,6 +324,6 @@ async function removeTeam(teamNumber) {
     await updateTeams();
   } catch (e) {
     console.error(e);
-    alert(`Failed to remove team: ${e.message}`);
+    alert(`Failed to remove team ${teamNumber}: ${e.message}`);
   }
 }
